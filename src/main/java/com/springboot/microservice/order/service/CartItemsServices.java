@@ -1,5 +1,7 @@
 package com.springboot.microservice.order.service;
 
+import com.netflix.appinfo.InstanceInfo;
+import com.netflix.discovery.EurekaClient;
 import com.springboot.microservice.order.dao.CartDAO;
 import com.springboot.microservice.order.dao.CartItemsDAO;
 import com.springboot.microservice.order.dto.CartItemsDTO;
@@ -9,7 +11,6 @@ import com.springboot.microservice.order.entity.CartItems;
 import com.springboot.microservice.order.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,11 +33,13 @@ public class CartItemsServices {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${book.service.url}")
-    private String bookService;
+    @Autowired
+    private EurekaClient eurekaClient;
 
     public Integer addToCart(CartItemsDTO cartItemsDto) {
-        String url=bookService+cartItemsDto.getBook();
+        InstanceInfo instanceInfo= eurekaClient.getNextServerFromEureka("book_service",false);
+
+        String url= instanceInfo.getHomePageUrl()+"/api/v1/book/"+cartItemsDto.getBook();
 
         ResponseEntity<BookResponse> bookResponse= restTemplate.getForEntity(url, BookResponse.class);
 

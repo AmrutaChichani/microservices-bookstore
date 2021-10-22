@@ -1,12 +1,12 @@
 package com.springboot.microservice.order.service;
 
+import com.netflix.discovery.EurekaClient;
 import com.springboot.microservice.order.dao.CartDAO;
 import com.springboot.microservice.order.entity.Cart;
 import com.springboot.microservice.order.entity.CustomerResponse;
 import com.springboot.microservice.order.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -23,12 +23,14 @@ public class CartServices {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("${customer.service.url}")
-    private String customerService;
+    @Autowired
+    private EurekaClient client;
 
     public Integer getCarts(String token,Integer customerId) {
-        log.info("Url:{}",customerService);
-        String url=customerService+customerId;
+        String host=client.getNextServerFromEureka("customer_service",false).getHomePageUrl();
+        String url= host+"/api/v1/customer/"+customerId;
+        log.info("Url:{}",url);
+
         HttpHeaders header=new HttpHeaders();
         header.set("Authorization",token);
 
